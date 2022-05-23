@@ -1,0 +1,213 @@
+// Schema 1: DRI - Hardware
+// Goes from the level of 
+// organisations and services
+// down through machine rooms,
+// racks, servers and units of
+// processing and storage
+
+Table manufacturer {
+  id int  
+  name varchar
+  location int [ref: > location.id]
+}
+
+Table processing_node {
+  id int
+  name varchar
+  rack int [ref: > rack.id]
+  memory_capacity float 
+  manufacturer int [ref: > manufacturer.id]
+  start_date datetime [note: 'When deployed'] // add column n
+  end_date datetime [note: 'When retired']
+}
+
+//Ref: order_items.product_id > products.id
+
+Enum processor_type {
+  cpu
+  gpu
+}
+
+Enum processor_subtype {
+  single
+  dual
+  quad
+  hexa
+  octa
+  deca
+}
+
+Enum confidence_level {
+  low
+  medium
+  high
+}
+
+Enum architecture {
+  32_bit
+  64_bit
+}
+
+Enum storage_type {
+  disk
+  tape
+  object_store
+}
+
+Table storage_node {
+  id int
+  name varchar
+  storage_type storage_type
+  rack int [ref: > rack.id]
+  manufacturer int [ref: > manufacturer.id]
+  start_date varchar [note: 'When deployed'] // add column note
+}
+
+Table processor {
+  id int [pk] // primary key
+  name varchar
+  architecture architecture 
+  processor_model varchar
+  processing_node int [ref: > processing_node.id]
+  processor_type processor_type
+  processor_subtype processor_subtype
+  memory_capacity float [note: 'In GB']
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+}
+
+Table disk {
+  id int
+  name varchar
+  storage_node int [ref: > storage_node.id]
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+}
+
+Table tape_library {
+  id int
+  name varchar
+  storage_node int [ref: > storage_node.id]
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+}
+
+Table object_store {
+  id int
+  name varchar
+  storage_node int [ref: > storage_node.id]
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+}
+
+
+// Enum for 'value_source' table below
+Enum value_source {
+  manufacturer
+  estimate
+  measured
+  other [note: 'need to specify these'] // add column note
+}
+
+Table rack {
+  id int
+  name varchar
+  machine_room id [ref: > machine_room.id]
+}
+
+Table machine_room {
+  id int
+  name varchar
+  site int [ref: > site.id]
+  Indexes {
+    (id, name) [pk]
+  }
+}
+
+Table cooling_system {
+  id int [pk]
+  name varchar
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+  heat_transfer_rate float [note: 'NEEDS TECHNICAL DEFINITION']
+  machine_room int [ref: > machine_room.id]
+}
+
+Table networking {
+  id int [pk]
+  name varchar
+  power_consumption int [ref: > power_consumption.id]
+  embedded_carbon int [ref: > embedded_carbon.id]
+  heat_transfer_rate float [note: 'NEEDS TECHNICAL DEFINITION']
+  machine_room int [ref: > machine_room.id]
+}
+
+Table site {
+  id int [pk]
+  location int [ref: > location.id]
+}
+
+Table location {
+  id int [pk]
+  name varchar
+  address1 varchar
+  address2 varchar
+  address3 varchar
+  postcode varchar
+  country varchar
+  url url
+}
+
+Table service {
+  id int [pk]
+  name varchar
+  generation float [default: 1.0]
+  machine_room int [ref: > machine_room.id]
+  organisation int [ref: > organisation.id]
+  start_date datetime
+  end_date datetime
+}
+
+Table organisation {
+  id int [pk]
+  name varchar
+  url url
+  parent_organisation int [ref: > organisation.id]
+  tel varchar
+  email email
+}
+
+Table power_consumption {
+  id int [pk]
+  value float
+  units varchar
+  source value_source [note: 'Where the value comes from']
+  confidence confidence_level [note: '% confidence level in the value']
+  comment varchar
+}
+
+Table embedded_carbon {
+  id int [pk]
+  value float
+  units varchar
+  source value_source [note: 'Where the value comes from']
+  confidence confidence_level [note: '% confidence level in the value']
+  comment varchar
+}
+
+Enum efficiency_metric_type {
+  PUE
+  DCIE
+  PAIA
+}
+
+Table efficiency_metric {
+  id int [pk]
+  value float
+  units varchar
+  efficiency_metric_type efficiency_metric_type
+  source value_source [note: 'Where the value comes from']
+  confidence confidence_level [note: '% confidence level in the value']
+  hardware_unit hardware_unit [note: 'processor, disk, tape_library or object_store']
+  comment varchar
+}

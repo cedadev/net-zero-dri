@@ -5,16 +5,28 @@
 // racks, servers and units of
 // processing and storage
 
+// v0.1.2
+
 Table manufacturer {
   id int  
   name varchar
   location int [ref: > location.id]
 }
 
+Enum function_type {
+  user_storage_fast
+  user_storage_slow
+  archive_storage
+  hpc
+  htc
+}
+
 Table processing_node {
   id int
   name varchar
   rack int [ref: > rack.id]
+  facility int [ref: > facility.id]
+  function_type function_type
   memory_capacity float 
   manufacturer int [ref: > manufacturer.id]
   start_date datetime [note: 'When deployed'] // add column n
@@ -59,6 +71,8 @@ Table storage_node {
   name varchar
   storage_type storage_type
   rack int [ref: > rack.id]
+  facility int [ref: > facility.id]
+  function_type function_type
   manufacturer int [ref: > manufacturer.id]
   start_date varchar [note: 'When deployed'] // add column note
 }
@@ -158,7 +172,7 @@ Table location {
   url url
 }
 
-Table service {
+Table facility {
   id int [pk]
   name varchar
   generation float [default: 1.0]
